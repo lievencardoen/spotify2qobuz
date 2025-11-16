@@ -179,3 +179,48 @@ class TrackMatcher:
             Normalized string (lowercase, stripped)
         """
         return s.lower().strip()
+
+
+def find_best_match(spotify_track: Dict, search_results: list) -> Optional[Dict]:
+    """
+    Find the best matching track from search results.
+    
+    This is a simplified version for favorite syncing that doesn't require
+    a full TrackMatcher instance. It uses fuzzy matching to find the best result.
+    
+    Args:
+        spotify_track: Normalized Spotify track with keys: title, artist, album, duration
+        search_results: List of Qobuz track dictionaries from search
+    
+    Returns:
+        Best matching Qobuz track dict, or None if no good match found
+    """
+    if not search_results:
+        return None
+    
+    best_match = None
+    best_score = 0
+    
+    spotify_title = spotify_track['title'].lower().strip()
+    spotify_artist = spotify_track['artist'].lower().strip()
+    
+    for qobuz_track in search_results:
+        qobuz_title = qobuz_track.get('title', '').lower().strip()
+        qobuz_artist = qobuz_track.get('performer', {}).get('name', '').lower().strip()
+        
+        # Calculate fuzzy match scores
+        title_score = fuzz.ratio(spotify_title, qobuz_title)
+        artist_score = fuzz.ratio(spotify_artist, qobuz_artist)
+        
+        # Combined score (weighted: title 60%, artist 40%)
+        combined_score = (title_score * 0.6) + (artist_score * 0.4)
+        
+        if combined_score > best_score:
+            best_score = combined_score
+            best_match = qobuz_track
+    
+    # Only return match if score is above threshold (70%)
+    if best_score >= 70:
+        return best_match
+    
+    return None

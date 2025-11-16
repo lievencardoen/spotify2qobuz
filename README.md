@@ -5,6 +5,7 @@ Automatically sync all your Spotify playlists to Qobuz with intelligent duplicat
 ## ✨ Features
 
 - 🎵 **Sync all playlists** from Spotify to Qobuz
+- ⭐ **Sync favorite/saved tracks** from Spotify to Qobuz
 - 🔄 **Smart duplicate prevention** - run multiple times without creating duplicates
 - 🎯 **High accuracy matching** (89%+ success rate)
   - ISRC-based matching (most accurate)
@@ -12,7 +13,7 @@ Automatically sync all your Spotify playlists to Qobuz with intelligent duplicat
 - 🔐 **Token-based authentication** - works with any Qobuz account (email, Google, Facebook, etc.)
 - 📊 **Detailed reporting** - JSON reports with match statistics
 - 🪵 **Comprehensive logging** - auto-generated timestamped logs
-- 🧪 **Well tested** - 88 unit tests, 92% code coverage
+- 🧪 **Well tested** - 116 unit tests, 91% code coverage
 - 🚀 **Fast and efficient** - leverages ISRC codes for instant matching
 
 ## 🚀 Quick Start
@@ -95,7 +96,7 @@ See [DUPLICATE_PREVENTION.md](DUPLICATE_PREVENTION.md) for technical details.
 
 ## 📋 Usage Examples
 
-### Basic Sync
+### Sync Playlists
 ```bash
 # Interactive mode with confirmation
 python sync.py
@@ -104,10 +105,25 @@ python sync.py
 python -m src.sync_service
 ```
 
+### Sync Favorites (NEW!)
+```bash
+# Sync your Spotify saved tracks to Qobuz favorites
+python sync_favorites.py
+
+# Dry run to see what would be synced
+python sync_favorites.py --dry-run
+
+# Re-sync all favorites (even if already favorited)
+python sync_favorites.py --no-skip-existing
+```
+
 ### Dry Run (Test Mode)
 ```bash
-# See what would happen without making changes
+# Playlists - see what would happen without making changes
 python -m src.sync_service --dry-run true
+
+# Favorites - see what would be synced
+python sync_favorites.py --dry-run
 ```
 
 ### Force Create New Playlists
@@ -118,7 +134,11 @@ python -m src.sync_service --update-existing false
 
 ### Custom Credentials File
 ```bash
+# Playlists
 python -m src.sync_service --credentials my_creds.md
+
+# Favorites
+python sync_favorites.py --credentials my_creds.md
 ```
 
 ### Custom Log File
@@ -128,6 +148,7 @@ python -m src.sync_service --log-file my_sync.log
 
 ## 📊 Command Line Options
 
+### Playlist Sync Options
 ```bash
 python -m src.sync_service [options]
 
@@ -144,6 +165,21 @@ Options:
       
   --log-file PATH
       Path to log file (default: auto-generated sync_logs/sync_YYYYMMDD_HHMMSS.log)
+```
+
+### Favorite Sync Options
+```bash
+python sync_favorites.py [options]
+
+Options:
+  --dry-run
+      Show what would be synced without making changes
+      
+  --no-skip-existing
+      Re-favorite tracks even if already in Qobuz favorites
+      
+  --credentials PATH
+      Path to credentials file (default: credentials.md)
 ```
 
 ## 📈 What to Expect
@@ -183,20 +219,22 @@ Options:
 ```
 SpotifyQobuzSync/
 ├── src/
-│   ├── spotify_client.py      # Spotify API integration
-│   ├── qobuz_client.py         # Qobuz API integration  
-│   ├── matcher.py              # ISRC + fuzzy matching
-│   ├── sync_service.py         # Main orchestration
+│   ├── spotify_client.py         # Spotify API integration
+│   ├── qobuz_client.py           # Qobuz API integration  
+│   ├── matcher.py                # ISRC + fuzzy matching
+│   ├── sync_service.py           # Playlist sync orchestration
+│   ├── favorite_sync_service.py  # Favorite sync orchestration
 │   └── utils/
-│       ├── credentials.py      # Credential parsing
-│       └── logger.py           # Logging setup
-├── tests/                      # 88 unit tests
-├── sync_logs/                  # Auto-generated logs
-├── credentials.md              # Your API credentials (gitignored)
-├── sync.py                     # Simple sync script
-├── test_token.py               # Test Qobuz token validity
-├── extract_token_from_har.py   # Extract token from HAR file
-├── README.md                   # This file
+│       ├── credentials.py        # Credential parsing
+│       └── logger.py             # Logging setup
+├── tests/                        # 116 unit tests
+├── sync_logs/                    # Auto-generated logs
+├── credentials.md                # Your API credentials (gitignored)
+├── sync.py                       # Playlist sync script
+├── sync_favorites.py             # Favorite sync script
+├── test_token.py                 # Test Qobuz token validity
+├── extract_token_from_har.py     # Extract token from HAR file
+├── README.md                     # This file
 ├── GET_TOKEN_INSTRUCTIONS.md   # Detailed token guide
 └── DUPLICATE_PREVENTION.md     # Technical duplicate prevention info
 ```

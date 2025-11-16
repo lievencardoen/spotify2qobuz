@@ -357,3 +357,155 @@ class TestQobuzClient:
             result = authenticated_client.create_playlist('Test Playlist')
         
         assert result is None
+    
+    def test_get_favorite_tracks_success(self, authenticated_client):
+        """Test getting favorite tracks successfully."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'tracks': {
+                'items': [
+                    {'id': 123456},
+                    {'id': 789012},
+                    {'id': 345678}
+                ]
+            }
+        }
+        
+        with patch.object(authenticated_client._session, 'get', return_value=mock_response):
+            track_ids = authenticated_client.get_favorite_tracks()
+        
+        assert len(track_ids) == 3
+        assert 123456 in track_ids
+        assert 789012 in track_ids
+        assert 345678 in track_ids
+    
+    def test_get_favorite_tracks_empty(self, authenticated_client):
+        """Test getting favorite tracks when user has none."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'tracks': {
+                'items': []
+            }
+        }
+        
+        with patch.object(authenticated_client._session, 'get', return_value=mock_response):
+            track_ids = authenticated_client.get_favorite_tracks()
+        
+        assert len(track_ids) == 0
+    
+    def test_get_favorite_tracks_no_tracks_key(self, authenticated_client):
+        """Test getting favorite tracks when response has unexpected structure."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {}
+        
+        with patch.object(authenticated_client._session, 'get', return_value=mock_response):
+            track_ids = authenticated_client.get_favorite_tracks()
+        
+        assert len(track_ids) == 0
+    
+    def test_get_favorite_tracks_custom_limit(self, authenticated_client):
+        """Test getting favorite tracks with custom limit."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'tracks': {'items': [{'id': 123}]}
+        }
+        
+        with patch.object(authenticated_client._session, 'get', return_value=mock_response) as mock_get:
+            authenticated_client.get_favorite_tracks(limit=100)
+        
+        # Verify the limit parameter was passed
+        call_args = mock_get.call_args
+        assert call_args[1]['params']['limit'] == 100
+    
+    def test_get_favorite_tracks_api_error(self, authenticated_client):
+        """Test getting favorite tracks when API returns error."""
+        mock_response = Mock()
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("API error")
+        
+        with patch.object(authenticated_client._session, 'get', return_value=mock_response):
+            with pytest.raises(Exception, match="Failed to get favorite tracks"):
+                authenticated_client.get_favorite_tracks()
+    
+    def test_add_favorite_track_success(self, authenticated_client):
+        """Test adding a track to favorites successfully."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        
+        with patch.object(authenticated_client._session, 'post', return_value=mock_response):
+            result = authenticated_client.add_favorite_track(123456)
+        
+        assert result is True
+    
+    def test_add_favorite_track_already_favorited(self, authenticated_client):
+        """Test adding a track that's already favorited (400 response)."""
+        mock_response = Mock()
+        mock_response.status_code = 400
+        
+        with patch.object(authenticated_client._session, 'post', return_value=mock_response):
+            result = authenticated_client.add_favorite_track(123456)
+        
+        assert result is True  # Should return True, track is favorited
+    
+    def test_add_favorite_track_failure(self, authenticated_client):
+        """Test adding a track to favorites when request fails."""
+        mock_response = Mock()
+        mock_response.status_code = 500
+        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError("Server error")
+        
+        with patch.object(authenticated_client._session, 'post', return_value=mock_response):
+            result = authenticated_client.add_favorite_track(123456)
+        
+        assert result is False
+    
+    def test_add_favorite_track_network_error(self, authenticated_client):
+        """Test adding a track to favorites when network error occurs."""
+        with patch.object(authenticated_client._session, 'post', side_effect=requests.exceptions.RequestException("Network error")):
+            result = authenticated_client.add_favorite_track(123456)
+        
+        assert result is False
+    
+    def test_is_track_favorited_true(self, authenticated_client):
+        """Test checking if a track is favorited (it is)."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'tracks': {
+                'items': [
+                    {'id': 123456},
+                    {'id': 789012}
+                ]
+            }
+        }
+        
+        with patch.object(authenticated_client._session, 'get', return_value=mock_response):
+            result = authenticated_client.is_track_favorited(123456)
+        
+        assert result is True
+    
+    def test_is_track_favorited_false(self, authenticated_client):
+        """Test checking if a track is favorited (it's not)."""
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            'tracks': {
+                'items': [
+                    {'id': 789012}
+                ]
+            }
+        }
+        
+        with patch.object(authenticated_client._session, 'get', return_value=mock_response):
+            result = authenticated_client.is_track_favorited(123456)
+        
+        assert result is False
+    
+    def test_is_track_favorited_error(self, authenticated_client):
+        """Test checking if a track is favorited when error occurs."""
+        with patch.object(authenticated_client, 'get_favorite_tracks', side_effect=Exception("API error")):
+            result = authenticated_client.is_track_favorited(123456)
+        
+        assert result is False

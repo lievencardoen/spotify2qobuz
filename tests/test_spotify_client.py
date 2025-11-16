@@ -228,3 +228,131 @@ class TestSpotifyClient:
         
         assert len(tracks) == 2
         assert mock_spotify.playlist_tracks.call_count == 2
+    
+    def test_get_saved_tracks_not_authenticated(self, spotify_client):
+        """Test getting saved tracks when not authenticated."""
+        with pytest.raises(Exception, match="Not authenticated"):
+            spotify_client.get_saved_tracks()
+    
+    def test_get_saved_tracks_success(self, spotify_client, mock_spotify):
+        """Test getting saved tracks successfully."""
+        spotify_client.sp = mock_spotify
+        
+        mock_spotify.current_user_saved_tracks.return_value = {
+            'items': [
+                {
+                    'track': {
+                        'name': 'Saved Track 1',
+                        'artists': [{'name': 'Artist 1'}],
+                        'album': {'name': 'Album 1'},
+                        'duration_ms': 200000,
+                        'external_ids': {'isrc': 'SAVED001'}
+                    }
+                },
+                {
+                    'track': {
+                        'name': 'Saved Track 2',
+                        'artists': [{'name': 'Artist 2'}],
+                        'album': {'name': 'Album 2'},
+                        'duration_ms': 180000,
+                        'external_ids': {}
+                    }
+                }
+            ],
+            'next': None
+        }
+        
+        tracks = spotify_client.get_saved_tracks()
+        
+        assert len(tracks) == 2
+        assert tracks[0]['title'] == 'Saved Track 1'
+        assert tracks[0]['artist'] == 'Artist 1'
+        assert tracks[0]['album'] == 'Album 1'
+        assert tracks[0]['duration'] == 200000
+        assert tracks[0]['isrc'] == 'SAVED001'
+        
+        assert tracks[1]['title'] == 'Saved Track 2'
+        assert tracks[1]['isrc'] is None
+        
+        mock_spotify.current_user_saved_tracks.assert_called_once_with(
+            limit=50,
+            offset=0
+        )
+    
+    def test_get_saved_tracks_pagination(self, spotify_client, mock_spotify):
+        """Test getting saved tracks with pagination."""
+        spotify_client.sp = mock_spotify
+        
+        mock_spotify.current_user_saved_tracks.side_effect = [
+            {
+                'items': [
+                    {
+                        'track': {
+                            'name': 'Track 1',
+                            'artists': [{'name': 'Artist 1'}],
+                            'album': {'name': 'Album 1'},
+                            'duration_ms': 200000,
+                            'external_ids': {}
+                        }
+                    }
+                ],
+                'next': 'next_url'
+            },
+            {
+                'items': [
+                    {
+                        'track': {
+                            'name': 'Track 2',
+                            'artists': [{'name': 'Artist 2'}],
+                            'album': {'name': 'Album 2'},
+                            'duration_ms': 180000,
+                            'external_ids': {}
+                        }
+                    }
+                ],
+                'next': None
+            }
+        ]
+        
+        tracks = spotify_client.get_saved_tracks()
+        
+        assert len(tracks) == 2
+        assert mock_spotify.current_user_saved_tracks.call_count == 2
+    
+    def test_get_saved_tracks_empty(self, spotify_client, mock_spotify):
+        """Test getting saved tracks when user has none."""
+        spotify_client.sp = mock_spotify
+        
+        mock_spotify.current_user_saved_tracks.return_value = {
+            'items': [],
+            'next': None
+        }
+        
+        tracks = spotify_client.get_saved_tracks()
+        
+        assert len(tracks) == 0
+    
+    def test_get_saved_tracks_missing_track_data(self, spotify_client, mock_spotify):
+        """Test getting saved tracks when some items have no track data."""
+        spotify_client.sp = mock_spotify
+        
+        mock_spotify.current_user_saved_tracks.return_value = {
+            'items': [
+                {'track': None},  # Missing track data
+                {
+                    'track': {
+                        'name': 'Valid Track',
+                        'artists': [{'name': 'Artist'}],
+                        'album': {'name': 'Album'},
+                        'duration_ms': 200000,
+                        'external_ids': {}
+                    }
+                }
+            ],
+            'next': None
+        }
+        
+        tracks = spotify_client.get_saved_tracks()
+        
+        assert len(tracks) == 1
+        assert tracks[0]['title'] == 'Valid Track'

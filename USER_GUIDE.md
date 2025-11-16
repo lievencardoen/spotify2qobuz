@@ -8,9 +8,10 @@ This guide will help you sync your Spotify playlists to Qobuz. The entire proces
 
 1. [Initial Setup](#initial-setup)
 2. [Running Your First Sync](#running-your-first-sync)
-3. [Running Again (Updates)](#running-again-updates)
-4. [Understanding the Results](#understanding-the-results)
-5. [FAQ](#faq)
+3. [Syncing Favorite Tracks](#syncing-favorite-tracks)
+4. [Running Again (Updates)](#running-again-updates)
+5. [Understanding the Results](#understanding-the-results)
+6. [FAQ](#faq)
 
 ---
 
@@ -154,6 +155,81 @@ The sync processes each track individually for accuracy.
 
 ---
 
+## Syncing Favorite Tracks
+
+**NEW!** You can now sync your Spotify "Liked Songs" (saved tracks) to Qobuz favorites! ⭐
+
+### What It Does
+
+- Fetches all your saved/liked tracks from Spotify
+- Searches for each track in Qobuz
+- Adds matched tracks to your Qobuz favorites
+- Skips tracks that are already favorited (smart duplicate prevention)
+
+### How to Sync Favorites
+
+#### Option 1: Test First (Dry Run)
+
+```bash
+python sync_favorites.py --dry-run
+```
+
+This shows you what would be synced without making any changes.
+
+#### Option 2: Sync Your Favorites
+
+```bash
+python sync_favorites.py
+```
+
+That's it! Your Spotify saved tracks will be favorited in Qobuz.
+
+### What to Expect
+
+**Output Example:**
+```
+Fetching saved tracks from Spotify...
+Found 523 saved tracks in Spotify
+Fetching existing Qobuz favorites to avoid duplicates...
+Found 412 existing favorites in Qobuz
+
+[1/523] Processing: The Beatles - Here Comes The Sun
+  ✅ Favorited: The Beatles - Here Comes The Sun
+
+[2/523] Processing: Pink Floyd - Comfortably Numb
+  ⏭️  Already favorited: Pink Floyd - Comfortably Numb
+  
+...
+
+FAVORITE SYNC SUMMARY
+Total Spotify saved tracks: 523
+Already favorited in Qobuz: 412
+Successfully matched & favorited: 98
+Not found in Qobuz: 13
+Success rate: 88.3%
+```
+
+### Running Favorites Sync Again
+
+Like playlist sync, you can run this multiple times:
+
+```bash
+# Normal sync (skips already favorited tracks)
+python sync_favorites.py
+
+# Re-favorite everything (even if already favorited)
+python sync_favorites.py --no-skip-existing
+```
+
+### Tips for Favorite Sync
+
+- **First run:** May take 10-20 minutes depending on library size
+- **Subsequent runs:** Much faster, only processes new tracks
+- **Safe to interrupt:** Press Ctrl+C anytime, run again later
+- **Check results:** Look in `sync_logs/` for detailed logs
+
+---
+
 ## Running Again (Updates)
 
 **Great news: You can run the sync as many times as you want!** 🎉
@@ -259,6 +335,10 @@ python test_token.py
 ### Q: Can I sync specific playlists only?
 
 **A:** Not yet. The tool syncs all playlists. You can delete unwanted ones from Qobuz after.
+
+### Q: Does it sync my Spotify liked/saved songs?
+
+**A:** Yes! Use `python sync_favorites.py` to sync your Spotify saved tracks to Qobuz favorites.
 
 ### Q: What if I accidentally created duplicate playlists?
 

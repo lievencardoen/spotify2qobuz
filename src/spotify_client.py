@@ -34,7 +34,7 @@ class SpotifyClient:
             Exception: If authentication fails
         """
         try:
-            scope = "playlist-read-private playlist-read-collaborative"
+            scope = "playlist-read-private playlist-read-collaborative user-library-read"
             auth_manager = SpotifyOAuth(
                 client_id=self.client_id,
                 client_secret=self.client_secret,
@@ -151,4 +151,63 @@ class SpotifyClient:
             offset += limit
         
         logger.info(f"Retrieved {len(tracks)} tracks from playlist {playlist_id}")
+        return tracks
+    
+    def get_saved_tracks(self) -> List[Dict]:
+        """
+        Get all saved/liked tracks for the authenticated user.
+        
+        Returns:
+            List of normalized track dictionaries with keys:
+            - title: Track title
+            - artist: Primary artist name
+            - album: Album name
+            - duration: Duration in milliseconds
+            - isrc: ISRC code (if available)
+        
+        Raises:
+            Exception: If not authenticated or API call fails
+        """
+        if not self.sp:
+            raise Exception("Not authenticated. Call authenticate_user() first.")
+        
+        tracks = []
+        offset = 0
+        limit = 50
+        
+        while True:
+            results = self.sp.current_user_saved_tracks(
+                limit=limit,
+                offset=offset
+            )
+            
+            for item in results['items']:
+                track_data = item.get('track')
+                if not track_data:
+                    continue
+                
+                # Extract ISRC if available
+                isrc = None
+                external_ids = track_data.get('external_ids', {})
+                if external_ids and 'isrc' in external_ids:
+                    isrc = external_ids['isrc']
+                
+                # Get primary artist
+                artist = track_data['artists'][0]['name'] if track_data['artists'] else "Unknown"
+                
+                track = {
+                    'title': track_data['name'],
+                    'artist': artist,
+                    'album': track_data['album']['name'],
+                    'duration': track_data['duration_ms'],
+                    'isrc': isrc
+                }
+                tracks.append(track)
+            
+            if not results['next']:
+                break
+            
+            offset += limit
+        
+        logger.info(f"Retrieved {len(tracks)} saved tracks from Spotify")
         return tracks

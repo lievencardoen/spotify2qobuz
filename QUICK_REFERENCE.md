@@ -2,6 +2,7 @@
 
 ## Common Commands
 
+### Playlist Sync
 ```bash
 # Test Qobuz token
 python test_token.py
@@ -17,6 +18,18 @@ python -m src.sync_service
 
 # Run sync (force new playlists)
 python -m src.sync_service --update-existing false
+```
+
+### Favorite Sync (NEW!)
+```bash
+# Dry run (see what would be synced)
+python sync_favorites.py --dry-run
+
+# Sync favorites
+python sync_favorites.py
+
+# Re-sync all (even if already favorited)
+python sync_favorites.py --no-skip-existing
 ```
 
 ## Getting Tokens
@@ -60,11 +73,19 @@ python -m src.sync_service --update-existing false
 
 ## CLI Options
 
+### Playlist Sync
 ```
 --dry-run {true,false}           Test mode (default: false)
 --update-existing {true,false}   Prevent duplicates (default: true)
 --credentials PATH               Credentials file (default: credentials.md)
 --log-file PATH                  Log file (default: auto-generated)
+```
+
+### Favorite Sync
+```
+--dry-run                        Show what would be synced (no changes)
+--no-skip-existing               Re-favorite all tracks
+--credentials PATH               Credentials file (default: credentials.md)
 ```
 
 ## Expected Results
