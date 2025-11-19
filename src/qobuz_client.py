@@ -264,6 +264,7 @@ class QobuzClient:
             True if successful, False otherwise
         """
         try:
+            import time
             url = f"{self.BASE_URL}/playlist/addTracks"
             
             # Use form data for POST
@@ -273,6 +274,10 @@ class QobuzClient:
             }
             
             response = self._session.post(url, data=data, timeout=10)
+            
+            # Add small delay to avoid rate limiting
+            time.sleep(0.1)
+            
             response.raise_for_status()
             
             logger.debug(f"Added track {track_id} to playlist {playlist_id}")
@@ -280,6 +285,12 @@ class QobuzClient:
             
         except Exception as e:
             logger.error(f"Error adding track {track_id} to playlist {playlist_id}: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                try:
+                    error_detail = e.response.json()
+                    logger.error(f"Response details: {error_detail}")
+                except:
+                    logger.error(f"Response text: {e.response.text}")
             return False
     
     def get_playlist(self, playlist_id: str) -> Optional[Dict]:
