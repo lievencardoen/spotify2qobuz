@@ -146,6 +146,23 @@ python sync_favorites.py --credentials my_creds.md
 python -m src.sync_service --log-file my_sync.log
 ```
 
+### Retry Failed Syncs (NEW!)
+```bash
+# Analyze the latest log file and retry playlists that had errors
+python retry_failed_syncs.py --dry-run true
+
+# Actually retry the failed playlists
+python retry_failed_syncs.py --dry-run false
+
+# Specify a specific log file to analyze
+python retry_failed_syncs.py --log-file sync_logs/sync_20251114_215703.log --dry-run false
+```
+
+This feature automatically:
+- Parses log files to identify playlists with errors (timeouts, connection issues, etc.)
+- Retries only those playlists that had problems
+- Saves time by not re-syncing successful playlists
+
 ## 📊 Command Line Options
 
 ### Playlist Sync Options
