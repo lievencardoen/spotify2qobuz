@@ -12,10 +12,7 @@ def test_token():
     
     try:
         # Load credentials
-        with open('credentials.md', 'r') as f:
-            content = f.read()
-        
-        creds = parse_credentials(content)
+        creds = parse_credentials('credentials.md')
         token = creds.get('QOBUZ_USER_AUTH_TOKEN')
         
         if not token:
