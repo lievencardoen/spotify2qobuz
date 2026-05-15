@@ -1,8 +1,14 @@
 import json
 import sys
 
+if len(sys.argv) < 2:
+    print("Usage: python extract_token_from_har.py <path/to/qobuz.har>")
+    sys.exit(1)
+
+har_path = sys.argv[1]
+
 # Read HAR file
-with open('/Users/lievencardoen/Downloads/www.qobuz.com.har', 'r') as f:
+with open(har_path, 'r') as f:
     har_data = json.load(f)
 
 print("=" * 60)
