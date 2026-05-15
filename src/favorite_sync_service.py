@@ -44,7 +44,13 @@ class FavoriteSyncService:
         # Get saved tracks from Spotify
         logger.info("Fetching saved tracks from Spotify...")
         spotify_tracks = self.spotify_client.get_saved_tracks()
-        
+
+        # Spotify returns saved tracks newest-saved first. Qobuz orders favorites
+        # by date-added desc, so adding in Spotify's order ends up reversed in
+        # Qobuz. Reverse here so the oldest Spotify save is added first and the
+        # newest is added last, preserving the user-facing chronology.
+        spotify_tracks = list(reversed(spotify_tracks))
+
         stats = {
             'total_spotify_favorites': len(spotify_tracks),
             'already_favorited': 0,
