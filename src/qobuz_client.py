@@ -304,7 +304,7 @@ class QobuzClient:
             Playlist data or None if not found
         """
         try:
-            params = {'playlist_id': playlist_id}
+            params = {'playlist_id': playlist_id, 'extra': 'track_ids'}
             data = self._make_request('playlist/get', params)
             return data
         except Exception as e:
@@ -350,13 +350,18 @@ class QobuzClient:
         """
         try:
             playlist_data = self.get_playlist(playlist_id)
-            if not playlist_data or 'tracks' not in playlist_data:
+            if not playlist_data:
                 return []
-            
-            track_ids = []
-            if 'items' in playlist_data['tracks']:
-                track_ids = [track['id'] for track in playlist_data['tracks']['items']]
-            
+
+            # Qobuz returns track IDs directly when the playlist/get call is
+            # made with extra=track_ids (see get_playlist).
+            track_ids = list(playlist_data.get('track_ids') or [])
+
+            # Fall back to the older shape in case the API ever returns it.
+            if not track_ids and isinstance(playlist_data.get('tracks'), dict):
+                items = playlist_data['tracks'].get('items', [])
+                track_ids = [track['id'] for track in items]
+
             logger.debug(f"Found {len(track_ids)} tracks in playlist {playlist_id}")
             return track_ids
             
